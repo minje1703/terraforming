@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>프로젝트 ESI: 29.2 (최종 안정화 및 AI 고도화)</title>
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+KR:wght@400;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: #030712; 
+            color: #e2e8f0; 
+            font-family: 'Noto Sans KR', sans-serif; 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            height: 100vh; 
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            padding: 12px; 
+            position: relative;
+        }
+
+        h1 { 
+            text-align: center; 
+            color: #fff; 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem; 
+            margin-bottom: 12px; 
+            text-shadow: 0 0 10px rgba(78,204,163,0.6);
+            letter-spacing: 1px;
+        }
+        .version { color: #4ecca3; font-size: 0.75rem; text-shadow: none; vertical-align: top; }
+        
+        /* 메뉴 & 셋업 화면 */
+        .menu-screen, .setup-screen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 10px;
+        }
+        .menu-logo { font-family: 'Orbitron', sans-serif; font-size: 2.8rem; color: #fff; text-shadow: 0 0 20px rgba(78,204,163,0.8); margin-bottom: 5px; text-align: center; line-height: 1.1; }
+        .menu-subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; letter-spacing: 2px; }
+
+        .guide-bar { display: flex; gap: 10px; width: 100%; margin-bottom: 10px; }
+        .guide-btn { flex: 1; padding: 12px; background: linear-gradient(to bottom, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 10px; color: #cbd5e1; font-weight: bold; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 0 #020617; transition: 0.1s; }
+        .guide-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #020617; }
+
+        .diff-title { width: 100%; text-align: left; font-size: 0.8rem; color: #cbd5e1; font-weight: bold; margin-bottom: -10px; padding-left: 5px; }
+        .difficulty-selector { display: flex; gap: 4px; width: 100%; background: #0f172a; padding: 4px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 5px; }
+        .diff-btn { flex: 1; padding: 10px 4px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #64748b; cursor: pointer; transition: 0.2s; }
+        .diff-btn.active { color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .diff-easy.active { background: #10b981; }
+        .diff-normal.active { background: #3b82f6; }
+        .diff-hard.active { background: #f59e0b; }
+        .diff-hell.active { background: #ef4444; text-shadow: 0 0 5px #fff; box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+
+        .menu-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; color: #fff; font-family: inherit; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5); transition: transform 0.1s, box-shadow 0.1s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .menu-btn:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.5); }
+        .menu-btn span { font-size: 0.75rem; font-weight: normal; opacity: 0.8; }
+        
+        .menu-btn-terra { background: linear-gradient(to bottom, #0f766e, #042f2e); border: 2px solid #14b8a6; }
+        .menu-btn-villain { background: linear-gradient(to bottom, #991b1b, #450a0a); border: 2px solid #ef4444; }
+        .menu-btn-practice { background: linear-gradient(to bottom, #475569, #1e293b); border: 2px solid #94a3b8; margin-top: 5px; }
+
+        /* 셋업 화면 */
+        .planet-setup-card { background: rgba(30,41,59,0.8); border: 2px solid #38bdf8; border-radius: 12px; padding: 24px; margin-bottom: 20px; width: 100%; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .planet-setup-card .name { font-size: 1.4rem; font-weight: bold; color: #38bdf8; margin-bottom: 15px; }
+        .planet-setup-card .stats { font-size: 1rem; color: #cbd5e1; display: flex; justify-content: center; gap: 15px; background: #020617; padding: 10px; border-radius: 8px; border: 1px solid #1e293b; }
+        
+        .practice-planet-list { display: flex; flex-direction: column; gap: 10px; width: 100%; overflow-y: auto; max-height: 60vh; padding-bottom: 10px; }
+        .practice-btn { background: #0f172a; border: 1px solid #334155; padding: 14px; border-radius: 10px; text-align: left; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #020617; }
+        .practice-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #020617; border-color: #38bdf8; }
+        .practice-btn .p-name { color: #38bdf8; font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; }
+        .practice-btn .p-stats { color: #94a3b8; font-size: 0.85rem; display: flex; gap: 12px; }
+
+        .btn-setup-cancel { margin-top: 15px; padding: 12px 20px; border-radius: 8px; border: none; background: #334155; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
+
+        /* 모달 시스템 */
+        .info-modal-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; padding: 20px; z-index: 200; }
+        .info-modal-box { background: linear-gradient(to bottom, #1e293b, #0f172a); border: 2px solid #38bdf8; border-radius: 16px; padding: 24px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .info-modal-title { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; color: #38bdf8; text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 10px; }
+        .info-modal-content { flex-grow: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.6; color: #e2e8f0; padding-right: 5px; }
+        .info-modal-content p { margin-bottom: 10px; word-break: keep-all; }
+        .info-modal-content h3 { color: #fcd34d; margin: 15px 0 8px 0; font-size: 1rem; }
+        
+        .rule-section { background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 4px solid; }
+        .rule-section.terra { border-left-color: #10b981; }
+        .rule-section.villain { border-left-color: #ef4444; }
+        .rule-section h4 { font-size: 0.95rem; margin-bottom: 6px; }
+        .rule-section.terra h4 { color: #a7f3d0; }
+        .rule-section.villain h4 { color: #fca5a5; }
+        .rule-section ul { padding-left: 20px; margin-bottom: 0; }
+        .modal-close-btn { margin-top: 15px; padding: 14px; border-radius: 10px; border: none; background: linear-gradient(to bottom, #0ea5e9, #0284c7); color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #075985; transition: 0.1s; }
+        .modal-close-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #075985; }
+
+        /* 인게임 스타일 */
+        .panel { background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 10px; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; }
+        .planet-info { display: flex; flex-direction: column; gap: 8px; }
+        .planet-header { display: flex; justify-content: space-between; align-items: center; }
+        .planet-name { color: #38bdf8; font-weight: bold; font-size: 1rem; text-shadow: 0 0 5px rgba(56,189,248,0.5); display: flex; align-items: center; gap: 6px; }
+        
+        .diff-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; color: #fff; font-weight: normal; }
+        .tag-easy { background: #10b981; } .tag-normal { background: #3b82f6; } .tag-hard { background: #f59e0b; } .tag-hell { background: #ef4444; border: 1px solid #fca5a5; }
+
+        .streak-badge { background: linear-gradient(90deg, #b45309, #d97706); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; border: 1px solid #fcd34d; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);} 70% {box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);} 100% {box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);} }
+
+        .deck-info { display: flex; justify-content: space-between; font-size: 0.8rem; background: #0f172a; padding: 4px 8px; border-radius: 6px; border: 1px solid #1e293b; }
+        .deck-terra { color: #4ecca3; font-weight: bold; } .deck-villain { color: #f87171; font-weight: bold; }
+
+        .ai-toggle-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+        .ai-toggle-btn { flex: 1; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; border: none; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+        .ai-on { background: linear-gradient(to bottom, #0284c7, #0369a1); color: #fff; } .ai-off { background: linear-gradient(to bottom, #334155, #1e293b); color: #94a3b8; }
+        
+        .status-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.85rem; }
+        .villain-turn { border-left: 4px solid #ef4444; color: #fca5a5; } .terra-turn { border-left: 4px solid #4ecca3; color: #a7f3d0; }
+        
+        .track-row { margin-bottom: 8px; } .track-row:last-child { margin-bottom: 0; }
+        .track-label { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.85rem; font-weight: bold; }
+        .stat-val { display: flex; gap: 6px; align-items: center; }
+        .stat-red { color: #ef4444; text-shadow: 0 0 5px rgba(239,68,68,0.5); } .stat-yellow { color: #f59e0b; } .stat-green { color: #10b981; }
+        
+        .track { background: #020617; height: 16px; border-radius: 8px; overflow: hidden; position: relative; border: 1px solid #1e293b; }
+        .bar { height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 8px; }
+        .bar-red { background: linear-gradient(90deg, #991b1b, #ef4444); } .bar-yellow { background: linear-gradient(90deg, #b45309, #f59e0b); } .bar-green { background: linear-gradient(90deg, #047857, #10b981); }
+        
+        .delta-badge { font-size: 0.7rem; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,0.5); animation: deltaFade 1.2s ease forwards; position: absolute; right: 0; top: -18px; }
+        .delta-pos { color: #34d399; } .delta-neg { color: #f87171; }
+        @keyframes deltaFade { 0% {opacity:0; transform:translateY(0);} 20% {opacity:1; transform:translateY(-8px);} 70% {opacity:1;} 100% {opacity:0;} }
+        
+        .log-box { flex-grow: 1; background: rgba(0, 0, 0, 0.6); border: 1px solid #0369a1; border-radius: 8px; padding: 8px; margin-bottom: 10px; font-size: 0.75rem; line-height: 1.5; overflow-y: auto; display: flex; flex-direction: column; }
+        .log-entry { padding-bottom: 3px; margin-bottom: 3px; border-bottom: 1px dashed #1e293b; }
+        
+        .toast { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(153, 27, 27, 0.95); color: #fff; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #ef4444; animation: toastFade 2.5s ease forwards; white-space: nowrap; }
+        @keyframes toastFade { 0% {opacity:0; top:18%;} 10% {opacity:1; top:20%;} 80% {opacity:1;} 100% {opacity:0;} }
+        
+        .controls-wrapper { margin-top: auto; }
+
+        .ai-thinking { text-align: center; color: #fcd34d; padding: 8px; font-size: 0.8rem; font-weight: bold; background: rgba(69, 26, 3, 0.8); border: 1px solid #b45309; border-radius: 8px; margin-bottom: 10px; animation: thinkBlink 1s infinite; }
+        .ai-alert { color: #34d399; border-color: #059669; background: rgba(6, 78, 59, 0.8); animation: none; }
+        @keyframes thinkBlink { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+        
+        .action-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+        .btn-action { flex: 1; padding: 10px; font-weight: bold; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5); transition: transform 0.1s, box-shadow 0.1s; color: #fff; }
+        .btn-action:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .btn-mode { background: linear-gradient(to bottom, #475569, #334155); }
+        .btn-surrender { background: linear-gradient(to bottom, #4b5563, #374151); flex: 0.4; border: 1px solid #1f2937; }
+        .btn-confirm { background: linear-gradient(to bottom, #dc2626, #991b1b); }
+        .btn-confirm:disabled { filter: grayscale(1); opacity: 0.5; }
+        .btn-cancel { background: linear-gradient(to bottom, #3f3f46, #27272a); flex: 0.4; }
+        
+        .hand { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; }
+        .card-btn { background: linear-gradient(to bottom, #1e293b, #0f172a); color: #e2e8f0; border: 2px solid #334155; border-radius: 10px; padding: 8px 4px; min-height: 85px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 5px 0 #020617; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .card-btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 0 0 #020617; }
+        .card-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .villain-btn { border-color: #7f1d1d; background: linear-gradient(to bottom, #450a0a, #2e0202); }
+        .terra-btn { border-color: #0f766e; background: linear-gradient(to bottom, #134e4a, #042f2e); }
+        .special-btn { border-color: #d946ef !important; background: linear-gradient(to bottom, #701a75, #4a044e) !important; }
+        .mega-btn { border-color: #f97316 !important; background: linear-gradient(to bottom, #9a3412, #7c2d12) !important; }
+        
+        .selected-discard { opacity: 0.6; border: 2px solid #fbbf24 !important; transform: translateY(3px) scale(0.95); box-shadow: 0 2px 0 #020617 !important; background: linear-gradient(to bottom, #78350f, #451a03) !important; }
+        .ai-target { transform: translateY(-10px) scale(1.05) !important; box-shadow: 0 0 20px #fcd34d !important; border-color: #fcd34d !important; z-index: 10; filter: brightness(1.2); }
+        
+        .card-name { font-weight: bold; font-size: 0.75rem; margin-bottom: 4px; word-break: keep-all; }
+        .card-text { font-size: 0.65rem; color: #94a3b8; }
+        
+        .game-over-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; z-index: 50; }
+        .game-over-box { background: linear-gradient(to bottom, #1e293b, #0f172a); border: 2px solid; border-radius: 16px; padding: 24px; text-align: center; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.8); line-height: 1.6; font-size: 1.1rem; font-weight: bold; }
+        .terra-win { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 30px rgba(16,185,129,0.3); }
+        .villain-win { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 30px rgba(239,68,68,0.3); }
+        .surrender-loss { border-color: #64748b; color: #cbd5e1; box-shadow: 0 0 30px rgba(100,116,139,0.3); }
+        
+        .restart-action-bar { display: flex; gap: 10px; margin-top: 15px; }
+        .restart-btn { flex: 1; padding: 14px; font-weight: bold; font-size: 1rem; color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: 0.1s; }
+        .btn-replay { background: linear-gradient(to bottom, #10b981, #047857); box-shadow: 0 5px 0 #064e3b; }
+        .btn-replay:active { transform: translateY(5px); box-shadow: 0 0 0 #064e3b; }
+        .btn-home { background: linear-gradient(to bottom, #64748b, #334155); box-shadow: 0 5px 0 #1e293b; }
+        .btn-home:active { transform: translateY(5px); box-shadow: 0 0 0 #1e293b; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    // --- 1. 전역 상수 ---
+    const GAME_RULES = {
+        MIN: 0, MAX: 10,
+        DANGER: 2, // 2 이하 또는 10은 위험
+        SAFE_MIN: 5, SAFE_MAX: 8,
+        RUIN_VAL: 3
+    };
+
+    const DIFFICULTY_LABELS = {
+        easy: '쉬움',
+        normal: '중간',
+        hard: '어려움',
+        hell: 'HELL'
+    };
+
+    // --- 2. 기본 유틸리티 함수 ---
+    const shuffleArray = (arr) => {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    };
+
+    const createDeck = (templates) => {
+        const deck = [];
+        templates.forEach(t => {
+            for (let i = 0; i < t.count; i++) {
+                deck.push({ ...t, id: Math.random() });
+            }
+        });
+        return shuffleArray(deck);
+    };
+
+    const clamp = (v) => Math.max(GAME_RULES.MIN, Math.min(GAME_RULES.MAX, v));
+    const isGreen = (v) => v >= GAME_RULES.SAFE_MIN && v <= GAME_RULES.SAFE_MAX;
+    const isDanger = (v) => v <= GAME_RULES.DANGER || v === GAME_RULES.MAX;
+
+    // --- 3. 행성 및 카드 데이터 ---
+    const INITIAL_PLANETS = [
+        { name: '얼어붙은 빙하기 행성', stats: { temp: 2, atmo: 4, water: 8, mag: 5 } },
+        { name: '작열하는 용암 행성', stats: { temp: 9, atmo: 8, water: 2, mag: 4 } },
+        { name: '방사능 황무지', stats: { temp: 5, atmo: 2, water: 3, mag: 2 } },
+        { name: '메마른 가스 행성', stats: { temp: 3, atmo: 9, water: 2, mag: 6 } },
+    ];
+
+    const VILLAIN_TEMPLATES = [
+        { count: 4, name: '태양풍 습격', text: '대기 -2', effect: { temp: 0, atmo: -2, water: 0, mag: 0 } },
+        { count: 4, name: '미니 빙하기', text: '온도 -2, 물 -1', effect: { temp:-2, atmo: 0, water:-1, mag: 0 } },
+        { count: 4, name: '코어 약화', text: '자기장 -2', effect: { temp: 0, atmo: 0, water: 0, mag: -2 } },
+        { count: 4, name: '심각 가뭄', text: '물 -2', effect: { temp: 0, atmo: 0, water:-2, mag: 0 } },
+        { count: 4, name: '소형 운석 충돌', text: '온도 +2, 대기 -1', effect: { temp: 2, atmo: -1, water: 0, mag: 0 } },
+        { count: 4, name: '온실 효과', text: '온도 +1, 대기 +2', effect: { temp: 1, atmo: 2, water: 0, mag: 0 } },
+        { count: 4, name: '부분 화산 폭발', text: '온도 +2, 대기 +1', effect: { temp: 2, atmo: 1, water: 0, mag: 0 } },
+        { count: 1, name: '[파멸] 소행성 충돌', text: '최고 지표 3으로', effect: {}, isSpecial: true, specialType: 'ruin' },
+        { count: 1, name: '[파멸] 거대 혜성', text: '최고 지표 3으로', effect: {}, isSpecial: true, specialType: 'ruin' },
+    ];
+
+    const TERRA_TEMPLATES = [
+        { count: 3, name: '소형 테라포밍', text: '모든 지표 +1', effect: { temp: 1, atmo: 1, water: 1, mag: 1 } },
+        { count: 2, name: '냉각기', text: '전체 -1 (과열조정)', effect: { temp:-1, atmo: -1, water:-1, mag: -1 } },
+        { count: 4, name: '얼음 혜성 충돌', text: '온도 -1, 물 +3', effect: { temp:-1, atmo: 0, water: 3, mag: 0 } },
+        { count: 4, name: '자기장 발전', text: '자기장 +3', effect: { temp: 0, atmo: 0, water: 0, mag: 3 } },
+        { count: 3, name: '온실가스 생성', text: '온도 +1, 대기 +3', effect: { temp: 1, atmo: 3, water: 0, mag: 0 } },
+        { count: 4, name: '간헐천 뚫기', text: '대기 +1, 물 +2', effect: { temp: 0, atmo: 1, water: 2, mag: 0 } },
+        { count: 2, name: '[메가] 대기 방출기', text: '온도 -2, 대기 -4', effect: { temp:-2, atmo: -4, water: 0, mag: 0 }, isMega: true },
+        { count: 2, name: '[메가] 코어 재점화', text: '온도 +2, 자기장 +3', effect: { temp: 2, atmo: 0, water: 0, mag: 3 }, isMega: true },
+        { count: 2, name: '[메가] 핵폭탄', text: '온도+4, 대기+3, 물-2', effect: { temp: 4, atmo: 3, water:-2, mag: 0 }, isMega: true },
+        { count: 1, name: '[특수] 유로파', text: '온도 무시 특수 승리', effect: {}, isSpecial: true, specialType: 'europa' },
+        { count: 1, name: '[특수] 타이탄', text: '물 무시 특수 승리', effect: {}, isSpecial: true, specialType: 'titan' },
+        { count: 1, name: '[특수] 대수층', text: '대기 무시 특수 승리', effect: {}, isSpecial: true, specialType: 'aquifer' },
+        { count: 1, name: '[특수] 방사선 균', text: '자기장 무시 특수 승리', effect: {}, isSpecial: true, specialType: 'bacteria' },
+    ];
+
+    // --- 4. 메인 App 컴포넌트 ---
+    function App() {
+        const [gamePhase, setGamePhase] = React.useState('menu');
+        const [activeModal, setActiveModal] = React.useState('intro');
+        const [currentMode, setCurrentMode] = React.useState('');
+        const [difficulty, setDifficulty] = React.useState('normal');
+        const [winStreak, setWinStreak] = React.useState(0);
+
+        const randomPlanet = () => INITIAL_PLANETS[Math.floor(Math.random() * INITIAL_PLANETS.length)];
+
+        const [planet, setPlanet] = React.useState(INITIAL_PLANETS[0]);
+        const [turn, setTurn] = React.useState('villain');
+        const [stats, setStats] = React.useState({});
+        const [count, setCount] = React.useState(0);
+        const [gameOverMsg, setGameOverMsg] = React.useState('');
+        const [logs, setLogs] = React.useState([]);
+
+        const [vDeck, setVDeck] = React.useState([]);
+        const [vHand, setVHand] = React.useState([]);
+        const [tDeck, setTDeck] = React.useState([]);
+        const [tHand, setTHand] = React.useState([]);
+
+        const [isSkipMode, setIsSkipMode] = React.useState(false);
+        const [selectedForDiscard, setSelectedForDiscard] = React.useState([]);
+        const [aiModes, setAiModes] = React.useState({ villain: false, terraformer: false });
+        const [isAiThinking, setIsAiThinking] = React.useState(false);
+        const [aiTargetIdx, setAiTargetIdx] = React.useState(null); 
+        const [notification, setNotification] = React.useState('');
+        const [lastDeltas, setLastDeltas] = React.useState(null);
+
+        const logEndRef = React.useRef(null);
+        const playCardRef = React.useRef(null);
+
+        const handleDifficultyChange = (level) => {
+            setDifficulty(level);
+            setWinStreak(0);
+        };
+
+        const startSetup = (mode) => {
+            if (mode === 'terraformer') setAiModes({ villain: true, terraformer: false });
+            else if (mode === 'villain') setAiModes({ villain: false, terraformer: true });
+            else if (mode === 'practice') setAiModes({ villain: false, terraformer: false });
+            
+            if (currentMode !== mode) setWinStreak(0);
+            setCurrentMode(mode);
+            setPlanet(randomPlanet());
+            setGamePhase('setup');
+        };
+
+        const startPlaying = (selectedPlanet) => {
+            const vd = createDeck(VILLAIN_TEMPLATES);
+            const td = createDeck(TERRA_TEMPLATES);
+            const vh = vd.splice(0, 5);
+            const th = td.splice(0, 5);
+
+            setPlanet(selectedPlanet);
+            setStats({ ...selectedPlanet.stats });
+            setTurn('villain');
+            setCount(0);
+            setGameOverMsg('');
+            setLogs([{ text: `🪐 ${selectedPlanet.name} 탐사 시작. 테라포밍 개시.`, color: '#4ecca3' }]);
+            setVDeck(vd); setVHand(vh);
+            setTDeck(td); setTHand(th);
+            setIsSkipMode(false);
+            setSelectedForDiscard([]);
+            setNotification('');
+            setIsAiThinking(false);
+            setAiTargetIdx(null);
+            setLastDeltas(null);
+            
+            setGamePhase('playing');
+        };
+
+        React.useEffect(() => {
+            if (gamePhase === 'playing' && logEndRef.current) {
+                logEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+        }, [logs, gamePhase]);
+
+        const addLog = (text, color, bold) => {
+            setLogs(prev => [...prev, { text, color, bold }]);
+        };
+
+        const showNotif = (msg) => {
+            setNotification(msg);
+            setTimeout(() => setNotification(''), 2500);
+        };
+
+        const showDeltas = (deltas) => {
+            setLastDeltas(deltas);
+            setTimeout(() => setLastDeltas(null), 1200);
+        };
+
+        const getColor = (v) => {
+            if (isDanger(v)) return 'red';
+            if (isGreen(v)) return 'green';
+            return 'yellow';
+        };
+
+        const handleEndGame = (msg) => {
+            setGameOverMsg(msg);
+            if (currentMode === 'terraformer') {
+                if (msg.includes('테라포머 승리') || msg.includes('테라포머 특수 승리')) setWinStreak(s => s + 1);
+                else setWinStreak(0);
+            } else if (currentMode === 'villain') {
+                if (msg.includes('빌런 승리')) setWinStreak(s => s + 1);
+                else setWinStreak(0);
+            }
+        };
+
+        const handleSurrender = () => {
+            if (window.confirm("정말로 임무를 포기하시겠습니까? (패배 처리됩니다)")) {
+                if (currentMode === 'terraformer') {
+                    handleEndGame('희망이 사라졌습니다...\n테라포머가 임무를 포기했습니다.\n[빌런 승리]');
+                } else if (currentMode === 'villain') {
+                    handleEndGame('자연이 굴복했습니다...\n빌런이 파괴를 포기했습니다.\n[테라포머 승리]');
+                } else {
+                    handleEndGame('탐사가 중단되었습니다.\n플레이어가 임무를 포기했습니다.\n[게임 종료]');
+                }
+            }
+        };
+
+        const checkEndOfTurn = (currentStats, remainingHandCount, currentCount) => {
+            const values = Object.values(currentStats);
+            const dangerCount = values.filter(isDanger).length;
+
+            if (dangerCount >= 3) {
+                handleEndGame('행성 다중 붕괴!\n3개 이상의 지표가 통제 불능 상태입니다.\n[빌런 승리]');
+                return;
+            }
+
+            const allGreen = values.every(isGreen);
+            if (allGreen) {
+                const newCount = currentCount + 1;
+                setCount(newCount);
+                if (newCount >= 2) {
+                    handleEndGame('생명체 탄생!\n2턴 연속 모든 지표 안정화 성공.\n[테라포머 승리]');
+                    return;
+                }
+                addLog(`✅ 지표 안정화! 연속 방어 ${newCount}/2`, '#34d399');
+            } else {
+                if (currentCount > 0) addLog('⚠️ 균형 이탈! 방어 카운트 초기화.', '#f87171');
+                setCount(0);
+            }
+
+            if (remainingHandCount === 0) {
+                handleEndGame('테라포머의 동력이 소진되었습니다.\n[시간 초과: 빌런 승리]');
+                return;
+            }
+            setTurn('villain');
+        };
+
+        const playCard = (cardIndex) => {
+            if (gameOverMsg) return;
+
+            if (isSkipMode) {
+                setSelectedForDiscard(prev => prev.includes(cardIndex) ? prev.filter(i => i !== cardIndex) : [...prev, cardIndex]);
+                return;
+            }
+
+            const isVillain = turn === 'villain';
+            const hand = isVillain ? [...vHand] : [...tHand];
+            const deck = isVillain ? [...vDeck] : [...tDeck];
+            const card = hand[cardIndex];
+            const playerName = isVillain ? '빌런' : '테라포머';
+            let newStats = { ...stats };
+
+            if (card.isSpecial) {
+                if (isVillain && card.specialType === 'ruin') {
+                    const statKeys = ['temp', 'atmo', 'water', 'mag'];
+                    const maxKey = statKeys.reduce((a, b) => newStats[a] > newStats[b] ? a : b);
+                    const nameMap = { temp: '온도', atmo: '대기', water: '물', mag: '자기장' };
+                    const before = newStats[maxKey];
+                    newStats[maxKey] = GAME_RULES.RUIN_VAL;
+                    showDeltas({ [maxKey]: GAME_RULES.RUIN_VAL - before });
+                    addLog(`[파멸] ${card.name}: ${nameMap[maxKey]} 붕괴!`, '#ef4444', true);
+                } else if (!isVillain) {
+                    const { temp, atmo, water, mag } = newStats;
+                    let canWin = false;
+                    let failMsg = '';
+                    if (card.specialType === 'europa') { canWin = isGreen(atmo) && isGreen(water) && isGreen(mag) && !isGreen(temp); failMsg = '온도 외 3개 초록 아님'; }
+                    if (card.specialType === 'titan') { canWin = isGreen(temp) && isGreen(atmo) && isGreen(mag) && !isGreen(water); failMsg = '물 외 3개 초록 아님'; }
+                    if (card.specialType === 'aquifer') { canWin = isGreen(temp) && isGreen(water) && isGreen(mag) && !isGreen(atmo); failMsg = '대기 외 3개 초록 아님'; }
+                    if (card.specialType === 'bacteria') { canWin = isGreen(temp) && isGreen(atmo) && isGreen(water) && !isGreen(mag); failMsg = '자기장 외 3개 초록 아님'; }
+
+                    if (canWin) {
+                        handleEndGame(`대체 생태계 탄생!\n${card.name} 발동!\n[테라포머 특수 승리]`);
+                        return;
+                    } else {
+                        showNotif(`발동 실패: ${failMsg}`);
+                        return;
+                    }
+                }
+            } else {
+                newStats.temp = clamp(stats.temp + card.effect.temp);
+                newStats.atmo = clamp(stats.atmo + card.effect.atmo);
+                newStats.water = clamp(stats.water + card.effect.water);
+                newStats.mag = clamp(stats.mag + card.effect.mag);
+
+                showDeltas({
+                    temp: newStats.temp - stats.temp,
+                    atmo: newStats.atmo - stats.atmo,
+                    water: newStats.water - stats.water,
+                    mag: newStats.mag - stats.mag,
+                });
+                addLog(`[${playerName}] ${card.name}`, card.isMega ? '#f97316' : undefined, card.isMega);
+            }
+
+            setStats(newStats);
+
+            if (deck.length > 0) hand[cardIndex] = deck.shift();
+            else hand.splice(cardIndex, 1);
+
+            if (isVillain) {
+                setVHand(hand); setVDeck(deck);
+                if (hand.length === 0) handleEndGame('자연의 안정화!\n거친 기상 이변이 멈췄습니다.\n[버티기 성공: 테라포머 승리]');
+                else setTurn('terraformer');
+            } else {
+                setTHand(hand); setTDeck(deck);
+                checkEndOfTurn(newStats, hand.length, count);
+            }
+        };
+
+        React.useEffect(() => { playCardRef.current = playCard; });
+
+        // --- AI (HELL 난이도 Lookahead 적용) ---
+        React.useEffect(() => {
+            if (gamePhase !== 'playing' || gameOverMsg) return;
+
+            const isVillainTurn = turn === 'villain';
+            const isAiTurn = (isVillainTurn && aiModes.villain) || (!isVillainTurn && aiModes.terraformer);
+            
+            if (!isAiTurn || (isVillainTurn ? vHand.length : tHand.length) === 0) return;
+
+            setIsAiThinking(true);
+            const currentHand = isVillainTurn ? vHand : tHand;
+
+            const calcTimer = setTimeout(() => {
+                const scoredCards = currentHand.map((card, idx) => {
+                    let simStats = { ...stats };
+                    let score = 0;
+
+                    // 시뮬레이션
+                    if (card.isSpecial && card.specialType === 'ruin') {
+                        const maxKey = Object.keys(simStats).reduce((a, b) => simStats[a] > simStats[b] ? a : b);
+                        simStats[maxKey] = GAME_RULES.RUIN_VAL;
+                    } else if (!card.isSpecial) {
+                        simStats.temp = clamp(simStats.temp + card.effect.temp);
+                        simStats.atmo = clamp(simStats.atmo + card.effect.atmo);
+                        simStats.water = clamp(simStats.water + card.effect.water);
+                        simStats.mag = clamp(simStats.mag + card.effect.mag);
+                    }
+
+                    const vals = Object.values(simStats);
+
+                    // 기본 점수 계산
+                    if (isVillainTurn) {
+                        if (card.isSpecial && card.specialType === 'ruin') {
+                            const maxVal = Math.max(...Object.values(stats));
+                            score = maxVal >= 9 ? -20 : (isGreen(maxVal) ? 15 : 2);
+                        } else {
+                            vals.forEach(v => {
+                                if (isDanger(v)) score += 10;
+                                else if (v <= 4 || v === 9) score += 3;
+                                else if (isGreen(v)) score -= 1;
+                            });
+                        }
+                    } else {
+                        if (card.isSpecial) {
+                            const { temp, atmo, water, mag } = stats;
+                            const c1 = isGreen(atmo) && isGreen(water) && isGreen(mag) && !isGreen(temp);
+                            const c2 = isGreen(temp) && isGreen(atmo) && isGreen(mag) && !isGreen(water);
+                            const c3 = isGreen(temp) && isGreen(water) && isGreen(mag) && !isGreen(atmo);
+                            const c4 = isGreen(temp) && isGreen(atmo) && isGreen(water) && !isGreen(mag);
+                            if (c1 || c2 || c3 || c4) score = 1000;
+                            else score = -50;
+                        } else {
+                            vals.forEach(v => {
+                                if (isGreen(v)) score += 10;
+                                else if (v === 3 || v === 4 || v === 9) score += 2;
+                                else if (isDanger(v)) score -= 20; 
+                            });
+                        }
+                    }
+
+                    // [AI 고도화] HELL 난이도의 경우 1수 앞을 평가
+                    if (difficulty === 'hell') {
+                        const dCount = vals.filter(isDanger).length;
+                        const nearDCount = vals.filter(v => v === 3 || v === 9).length;
+                        if (isVillainTurn) {
+                            if (dCount >= 3) score += 50; 
+                        } else {
+                            if (dCount > 0) score -= 30 * dCount;
+                            if (nearDCount > 0) score -= 10 * nearDCount;
+                        }
+                    }
+
+                    return { idx, score };
+                });
+
+                scoredCards.sort((a, b) => b.score - a.score);
+
+                let optimalProb = 1.0;
+                if (difficulty === 'easy') optimalProb = 0.4;
+                else if (difficulty === 'normal') optimalProb = 0.7;
+                else if (difficulty === 'hard') optimalProb = 0.9;
+                
+                let selectedIdx = scoredCards[0].idx;
+                if (Math.random() > optimalProb && scoredCards.length > 1) {
+                    const randomSubIdx = Math.floor(Math.random() * (scoredCards.length - 1)) + 1;
+                    selectedIdx = scoredCards[randomSubIdx].idx;
+                }
+                
+                setAiTargetIdx(selectedIdx);
+
+                setTimeout(() => {
+                    setAiTargetIdx(null);
+                    setIsAiThinking(false);
+                    if (playCardRef.current) playCardRef.current(selectedIdx);
+                }, 2000); 
+
+            }, 800);
+
+            return () => clearTimeout(calcTimer);
+        }, [turn, aiModes, gameOverMsg, vHand, tHand, stats, gamePhase, difficulty]);
+
+        // 교체 로직 
+        const executeDiscard = () => {
+            if (selectedForDiscard.length === 0) return;
+
+            const isVillain = turn === 'villain';
+            let hand = isVillain ? [...vHand] : [...tHand];
+            let deck = isVillain ? [...vDeck] : [...tDeck];
+            const playerName = isVillain ? '빌런' : '테라포머';
+            const names = selectedForDiscard.map(i => hand[i].name).join(', ');
+
+            addLog(`[${playerName}] 교체: ${names}`, '#94a3b8');
+
+            [...selectedForDiscard].sort((a, b) => b - a).forEach(i => hand.splice(i, 1));
+            for (let i = 0; i < selectedForDiscard.length; i++) {
+                if (deck.length > 0) hand.push(deck.shift());
+            }
+
+            setIsSkipMode(false);
+            setSelectedForDiscard([]);
+
+            // [UX 향상] 카드 교체 후 0.6초간 대기 (자연스러운 턴 전환 효과)
+            setTimeout(() => {
+                if (isVillain) {
+                    setVHand(hand); setVDeck(deck);
+                    if (hand.length === 0) handleEndGame('자연의 안정화!\n[버티기 성공: 테라포머 승리]');
+                    else setTurn('terraformer');
+                } else {
+                    setTHand(hand); setTDeck(deck);
+                    checkEndOfTurn(stats, hand.length, count);
+                }
+            }, 600);
+        };
+
+        return (
+            <div className="container">
+                {/* 팝업 모달 영역 */}
+                {activeModal === 'intro' && (
+                    <div className="info-modal-overlay">
+                        <div className="info-modal-box">
+                            <div className="info-modal-title">🌌 세계관 : 서막</div>
+                            <div className="info-modal-content">
+                                <p>서기 2150년, 자원이 고갈된 지구를 떠난 인류는 생존을 위해 새로운 행성을 찾아 나섰습니다.</p>
+                                <p>당신은 척박한 우주 환경을 생명체가 살 수 있는 낙원으로 바꾸는 임무를 띤 <strong>[테라포머]</strong>입니다.</p>
+                                <p>하지만 우주의 거대한 대자연은 이를 쉽게 허락하지 않습니다. 재난과 기상 이변을 일으키며 행성의 파괴를 주도하는 대자연의 의지, <strong>[빌런]</strong>이 당신을 막아설 것입니다.</p>
+                                <p>온도, 대기, 물, 자기장. 4가지 필수 생명 지표를 조율하여 행성에 생명체의 씨앗을 피우시겠습니까? 아니면 거친 우주의 먼지로 사라지시겠습니까?</p>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setActiveModal(null)}>확인 (게임으로)</button>
+                        </div>
+                    </div>
+                )}
+
+                {activeModal === 'rules' && (
+                    <div className="info-modal-overlay">
+                        <div className="info-modal-box">
+                            <div className="info-modal-title">📜 게임 방법 (Rule)</div>
+                            <div className="info-modal-content">
+                                <h3>🏆 승리 조건</h3>
+                                <div className="rule-section terra">
+                                    <h4>🟢 테라포머 (행성 개척자)</h4>
+                                    <ul>
+                                        <li><strong>정석 승리:</strong> 4가지 지표를 모두 <strong>초록색(5~8)</strong>으로 만들고, 빌런의 턴을 <strong>2번 연속</strong> 버텨냅니다.</li>
+                                        <li><strong>특수 승리:</strong> [특수] 카드를 조건에 맞춰 발동합니다.</li>
+                                        <li><strong>버티기 승리:</strong> 빌런의 패를 소진시킵니다.</li>
+                                    </ul>
+                                </div>
+                                <div className="rule-section villain">
+                                    <h4>🔴 빌런 (대자연의 재앙)</h4>
+                                    <ul>
+                                        <li><strong>파괴 승리:</strong> 지표 <strong>3개 이상</strong>을 동시에 <strong>빨간색(0~2 또는 10)</strong> 붕괴 구간으로 만듭니다.</li>
+                                        <li><strong>시간 초과 승리:</strong> 테라포머의 패를 소진시킵니다.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setActiveModal(null)}>닫기</button>
+                        </div>
+                    </div>
+                )}
+
+                {gamePhase === 'menu' && (
+                    <div className="menu-screen">
+                        <div>
+                            <div className="menu-logo">PROJECT<br/>ESI</div>
+                            <div className="menu-subtitle">행성 테라포밍 서바이벌</div>
+                        </div>
+
+                        <div className="guide-bar">
+                            <button className="guide-btn" onClick={() => setActiveModal('intro')}>📖 세계관</button>
+                            <button className="guide-btn" onClick={() => setActiveModal('rules')}>📜 게임 방법</button>
+                        </div>
+
+                        <div className="diff-title">AI 지능 난이도 선택</div>
+                        <div className="difficulty-selector">
+                            {Object.keys(DIFFICULTY_LABELS).map(key => (
+                                <button key={key} className={`diff-btn diff-${key} ${difficulty === key ? 'active' : ''}`} onClick={() => handleDifficultyChange(key)}>
+                                    {DIFFICULTY_LABELS[key]}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div style={{width: '100%'}}>
+                            <button className="menu-btn menu-btn-terra" onClick={() => startSetup('terraformer')}>
+                                🛸 테라포머로 시작 <span>(vs 빌런 AI)</span>
+                            </button>
+                        </div>
+                        <div style={{width: '100%'}}>
+                            <button className="menu-btn menu-btn-villain" onClick={() => startSetup('villain')}>
+                                ☄️ 빌런으로 시작 <span>(vs 테라포머 AI)</span>
+                            </button>
+                        </div>
+                        <div style={{width: '100%'}}>
+                            <button className="menu-btn menu-btn-practice" onClick={() => startSetup('practice')}>
+                                👥 2인 대전 / 연습 <span>(원하는 행성 직접 선택)</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {gamePhase === 'setup' && (
+                    <div className="setup-screen">
+                        <h2 style={{color: '#4ecca3', fontSize: '1.3rem', marginBottom: '10px'}}>
+                            {currentMode === 'practice' ? '탐사할 행성을 선택하세요' : '탐사 행성 확정'}
+                        </h2>
+                        
+                        {currentMode !== 'practice' ? (
+                            <div style={{width: '100%'}}>
+                                <div className="planet-setup-card">
+                                    <div className="name">🪐 {planet.name}</div>
+                                    <div className="stats">
+                                        <span>🌡️ {planet.stats.temp}</span><span>💨 {planet.stats.atmo}</span>
+                                        <span>💧 {planet.stats.water}</span><span>🧲 {planet.stats.mag}</span>
+                                    </div>
+                                </div>
+                                <button className="menu-btn menu-btn-terra" onClick={() => startPlaying(planet)}>🚀 탐사 시작</button>
+                            </div>
+                        ) : (
+                            <div className="practice-planet-list">
+                                {INITIAL_PLANETS.map((p, idx) => (
+                                    <button key={idx} className="practice-btn" onClick={() => startPlaying(p)}>
+                                        <div className="p-name">🪐 {p.name}</div>
+                                        <div className="p-stats">
+                                            <span>🌡️ {p.stats.temp}</span><span>💨 {p.stats.atmo}</span>
+                                            <span>💧 {p.stats.water}</span><span>🧲 {p.stats.mag}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <button className="btn-setup-cancel" onClick={() => setGamePhase('menu')}>취소 (메인 메뉴로)</button>
+                    </div>
+                )}
+
+                {gamePhase === 'playing' && (
+                    <>
+                        <h1 style={{fontSize: '1rem', marginBottom: '8px'}}>PROJECT ESI <span className="version">v29.2</span></h1>
+                        
+                        <div className="panel planet-info">
+                            <div className="planet-header">
+                                <span className="planet-name">
+                                    🪐 {planet.name}
+                                    {currentMode !== 'practice' && (
+                                        <span className={`diff-tag tag-${difficulty}`}>{DIFFICULTY_LABELS[difficulty]}</span>
+                                    )}
+                                </span>
+                                {currentMode !== 'practice' && winStreak > 0 && <span className="streak-badge">🔥 {winStreak}연승 중!</span>}
+                            </div>
+                            <div className="deck-info">
+                                <span className="deck-terra">내 덱: {tDeck.length}</span><span className="deck-villain">적 덱: {vDeck.length}</span>
+                            </div>
+                        </div>
+
+                        {currentMode === 'practice' && (
+                            <div className="ai-toggle-bar">
+                                <button className={`ai-toggle-btn ${aiModes.villain ? 'ai-on' : 'ai-off'}`} onClick={() => setAiModes(prev => ({ ...prev, villain: !prev.villain }))}>
+                                    빌런 AI: {aiModes.villain ? 'ON' : 'OFF'}
+                                </button>
+                                <button className={`ai-toggle-btn ${aiModes.terraformer ? 'ai-on' : 'ai-off'}`} onClick={() => setAiModes(prev => ({ ...prev, terraformer: !prev.terraformer }))}>
+                                    테라 AI: {aiModes.terraformer ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
+                        )}
+
+                        <div className={`panel status-header ${turn === 'villain' ? 'villain-turn' : 'terra-turn'}`}>
+                            <div>{turn === 'villain' ? '빌런 턴' : '테라포머 턴'}</div>
+                            <div>{turn === 'villain' ? '목표: 파괴' : `안정화: ${count}/2`}</div>
+                        </div>
+
+                        <div className="panel track-container">
+                            {[
+                                { label: '🌡️ 온도', key: 'temp' }, { label: '💨 대기', key: 'atmo' },
+                                { label: '💧 물', key: 'water' }, { label: '🧲 자기장', key: 'mag' },
+                            ].map(({ label, key }) => {
+                                const val = stats[key];
+                                const color = getColor(val);
+                                const delta = lastDeltas ? lastDeltas[key] : 0;
+                                return (
+                                    <div className="track-row" key={key}>
+                                        <div className="track-label">
+                                            <span className="stat-label">{label}</span>
+                                            <span style={{position:'relative'}}>
+                                                <span className={`stat-val stat-${color}`}>{val} / 10</span>
+                                                {lastDeltas && delta !== 0 && (
+                                                    <span className={`delta-badge ${delta > 0 ? 'delta-pos' : 'delta-neg'}`}>
+                                                        {delta > 0 ? `+${delta}` : delta}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="track">
+                                            <div className={`bar bar-${color}`} style={{ width: `${val * 10}%` }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="log-box">
+                            {logs.map((log, i) => (
+                                <div key={i} className="log-entry" style={{ color: log.color || '#cbd5e1', fontWeight: log.bold ? 'bold' : 'normal' }}>
+                                    &gt; {log.text}
+                                </div>
+                            ))}
+                            <div ref={logEndRef} />
+                        </div>
+
+                        {notification && <div className="toast">{notification}</div>}
+
+                        <div className="controls-wrapper">
+                            {isAiThinking && aiTargetIdx === null && <div className="ai-thinking">🤖 시스템이 최적의 수를 분석 중입니다...</div>}
+                            {isAiThinking && aiTargetIdx !== null && <div className="ai-thinking ai-alert">⚠️ 상대방이 카드를 선택했습니다!</div>}
+                            
+                            {!(turn === 'villain' ? aiModes.villain : aiModes.terraformer) && !gameOverMsg && (
+                                <div className="action-bar">
+                                    {!isSkipMode ? (
+                                        <>
+                                            <button className="btn-action btn-mode" onClick={() => setIsSkipMode(true)}>🔄 카드 교체 모드</button>
+                                            <button className="btn-action btn-surrender" onClick={handleSurrender}>🏳️ 포기하기</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button className="btn-action btn-confirm" onClick={executeDiscard} disabled={selectedForDiscard.length === 0}>
+                                                {selectedForDiscard.length > 0 ? `✔ ${selectedForDiscard.length}장 교체` : '선택 대기'}
+                                            </button>
+                                            <button className="btn-action btn-cancel" onClick={() => { setIsSkipMode(false); setSelectedForDiscard([]); }}>취소</button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {!gameOverMsg && (
+                                <div className="hand">
+                                    {(turn === 'villain' ? vHand : tHand).map((card, idx) => {
+                                        const isSelected = selectedForDiscard.includes(idx);
+                                        const isTargetedByAi = aiTargetIdx === idx;
+                                        const isCurrentTurnAi = turn === 'villain' ? aiModes.villain : aiModes.terraformer;
+                                        const isDisabled = isCurrentTurnAi && !isTargetedByAi;
+                                        
+                                        return (
+                                            <button
+                                                key={card.id}
+                                                className={[
+                                                    'card-btn', 
+                                                    turn === 'villain' ? 'villain-btn' : 'terra-btn', 
+                                                    card.isSpecial ? 'special-btn' : '', 
+                                                    card.isMega ? 'mega-btn' : '', 
+                                                    isSelected ? 'selected-discard' : '',
+                                                    isTargetedByAi ? 'ai-target' : ''
+                                                ].filter(Boolean).join(' ')}
+                                                onClick={() => !isCurrentTurnAi && playCard(idx)}
+                                                disabled={isDisabled}
+                                            >
+                                                <div className="card-name">{card.name}</div>
+                                                <div className="card-text">{card.text}</div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {gameOverMsg && (
+                            <div className="game-over-overlay">
+                                <div className={`game-over-box ${
+                                    gameOverMsg.includes('강제 종료') || gameOverMsg.includes('포기했습니다') 
+                                        ? 'surrender-loss' 
+                                        : (gameOverMsg.includes('테라포머') ? 'terra-win' : 'villain-win')
+                                }`}>
+                                    {gameOverMsg.split('\n').map((line, i) => <div key={i} style={{marginBottom: i===0?'10px':'0'}}>{line}</div>)}
+                                    <div className="restart-action-bar">
+                                        <button className="restart-btn btn-replay" onClick={() => startSetup(currentMode)}>🔄 다시하기</button>
+                                        <button className="restart-btn btn-home" onClick={() => { setGamePhase('menu'); }}>🏠 메인 메뉴</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
